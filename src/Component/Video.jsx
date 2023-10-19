@@ -53,7 +53,7 @@ function Video() {
           <iframe
             width="1400"
             height="720"
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=0`}
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
             frameBorder="0"
             allowFullScreen
             style={{ position:'relative',left:'2.5rem' }}
