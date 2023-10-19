@@ -78,7 +78,7 @@ const Output = () => {
                   
                 ></iframe>
                 <p>
-                  <h2>{video.title}</h2>
+                  <h2 style={{width:"37vw"}}>{video.title}</h2>
                 </p>
                 <p>
                   <h2>
