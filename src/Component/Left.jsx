@@ -17,7 +17,7 @@ const Left = () => { const navigate=useNavigate();
   borderRight:"1px solid black", width:'10.2rem',position:'relative',top:'5.5rem'
   }} >  <button style={{
     width:'10rem',position:'relative',display:'flex'
-    }} onClick={()=>{navigate('/Shorts')}}><div style={{paddingLeft:'1rem'}}>🔰 </div> Shorts</button>
+    }} onClick={()=>{navigate('/Shorts')}}><div style={{marginLeft:'0.34rem'}}> <i class="fa-solid fa-circle-play"></i></div> <div  style={{marginLeft:'1.36rem'}} > Shorts</div> </button>
       {first.map((value, index) => (<Link to={`Search/${value.name}`} key={index}>
         <button  style={{display:'flex', flexDirection:'row',alignItems:'center',width:'10rem',height:'3rem'}} onClick={()=>{setang(value.name)}}>
           <p style={{ paddingRight:'1.2rem'}}>
