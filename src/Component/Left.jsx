@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Icon from './Iconapi';
 import { useNavigate } from 'react-router-dom';
-import RapidApi from '../RapidApi';
+import GoogleApi from '../GoogleApi';
 import { Link } from 'react-router-dom';
 import { useMediaQuery, Skeleton } from '@mui/material';
 
@@ -107,7 +107,7 @@ const Left = () => {
       )}
       <div style={{ marginLeft: isMobile ? '0' : '12.5rem' }}>
         {/* Content that should not overlap with the fixed sidebar */}
-        <RapidApi />
+        <GoogleApi />
       </div>
     </div>
   );

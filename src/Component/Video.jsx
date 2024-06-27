@@ -22,8 +22,8 @@ function Video() {
 
   useEffect(() => {
     const fetchRelatedVideos = async () => {
-      try {window.scrollTo(0, 0);
-        const response = await fetch(`${API_URL}?relatedToVideoId=${videoId}&part=id%2Csnippet&type=video&maxResults=50`, options);
+      try {
+        const response = await fetch(`${API_URL}?relatedToVideoId=${videoId}&part=id%2Csnippet&type=video&maxResults=12`, options);
         const result = await response.json();
         setRelatedVideos(result.items);
         setLoading(false);
@@ -37,7 +37,7 @@ function Video() {
   }, [videoId]);
 
   return (
-    <Box>
+    <Box >
       <Stack
         direction='row'
         alignItems='center'
@@ -62,58 +62,61 @@ function Video() {
         <Search />
       </Stack>
 
-      <Box mt={4} px={4}>
-        <Box>
-          <div style={{ position: 'relative', paddingTop: '56.25%', height: 0 }}>
-            <iframe
-              title="YouTube Video Player"
-              width="100%"
-              height="100%"
-              src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-              frameBorder="0"
-              allowFullScreen
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
-              scrolling="no"
-            ></iframe>
+      <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} px={2} py={4}>
+        <Box flex={1} pr={{ md: 4 }}>
+          <div style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+            <div style={{ position: 'relative', paddingBottom: '66.25%', height: 0 }}>
+              <iframe
+                title="YouTube Video Player"
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                frameBorder="0"
+                allowFullScreen
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
+                scrolling="no"
+              ></iframe>
+            </div>
           </div>
-          <Typography variant="h4" mt={2}>
-            {/* Title here */}
-          </Typography>
-          <Typography variant="h6" color="textSecondary">
-            {/* Channel here */}
-          </Typography>
+        
         </Box>
 
-        <Typography variant="h5" mt={4}>
-          Related Videos
-        </Typography>
-        <Grid container spacing={4} justifyContent="center" mt={4}>
-          {loading
-            ? Array.from({ length: 12 }).map((_, index) => (
-                <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
-                  <Skeleton variant="rectangular" width="100%" height={200} />
-                  <Skeleton variant="text" width="80%" />
-                  <Skeleton variant="text" width="60%" />
-                </Grid>
-              ))
-            : relatedVideos.map((value, index) => (
-                <Grid item key={index} xs={12} sm={6} md={4} lg={3}>
-                  <Link to={`/video/${value.id.videoId}?channelName=${value.snippet.channelTitle}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                    {value.snippet &&
-                      value.snippet.thumbnails &&
-                      value.snippet.thumbnails.high && (
-                        <img src={value.snippet.thumbnails.high.url} alt={value.snippet.title} style={{ width: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }} />
-                      )}
-                    <Typography variant="subtitle1" mt={2} noWrap>
-                      {value.snippet.title}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      {value.snippet.channelTitle}
-                    </Typography>
-                  </Link>
-                </Grid>
-              ))}
-        </Grid>
+        <Box flex={1} pl={{ md: 4 }}>
+          <Typography variant="h5" mt={{ xs: 4, md: 0 }}>
+            Related Videos
+          </Typography>
+          <Grid container spacing={2} mt={2}>
+            {loading
+              ? Array.from({ length: 6 }).map((_, index) => (
+                  <Grid item key={index} xs={12} sm={6} md={4}>
+                    <Skeleton variant="rectangular" width="100%" height={150} />
+                    <Skeleton variant="text" width="100%" />
+                    <Skeleton variant="text" width="80%" />
+                  </Grid>
+                ))
+              : relatedVideos.map((value, index) => (
+                  <Grid item key={index} xs={12} sm={6} md={4}>
+                    <Link to={`/video/${value.id.videoId}?channelName=${value.snippet.channelTitle}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      {value.snippet &&
+                        value.snippet.thumbnails &&
+                        value.snippet.thumbnails.high && (
+                          <img
+                            src={value.snippet.thumbnails.high.url}
+                            alt={value.snippet.title}
+                            style={{ width: '100%', height: 'auto', borderRadius: '8px', boxShadow: '0 4px 8px rgba(0,0,0,0.1)' }}
+                          />
+                        )}
+                      <Typography variant="subtitle1" mt={2} noWrap>
+                        {value.snippet.title}
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {value.snippet.channelTitle}
+                      </Typography>
+                    </Link>
+                  </Grid>
+                ))}
+          </Grid>
+        </Box>
       </Box>
     </Box>
   );

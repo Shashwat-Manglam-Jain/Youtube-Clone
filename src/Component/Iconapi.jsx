@@ -15,10 +15,10 @@ import DeveloperModeIcon from '@mui/icons-material/DeveloperMode';
 
 const Icon=[
     { name: 'New', icon: <HomeIcon />, },
-    { name: 'Trending', icon: <i class="fa-solid fa-money-bill-trend-up"></i>, },
-    { name: 'Coding', icon: <i class="fa-solid fa-laptop-code"></i>, },
-    { name: 'ReactJS', icon: <i class="fa-solid fa-microchip"></i>, },
-    { name: 'NextJS', icon: <i class="fa-solid fa-bug"></i>, },
+    { name: 'Trending', icon: <i className="fa-solid fa-money-bill-trend-up"></i>, },
+    { name: 'Coding', icon: <i className="fa-solid fa-laptop-code"></i>, },
+    { name: 'ReactJS', icon: <i className="fa-solid fa-microchip"></i>, },
+    { name: 'NextJS', icon: <i className="fa-solid fa-bug"></i>, },
     { name: 'Music', icon: <MusicNoteIcon /> },
     { name: 'Education', icon: <SchoolIcon />, },
     { name: 'Podcast', icon: <GraphicEqIcon />, },
