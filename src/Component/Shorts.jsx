@@ -5,13 +5,30 @@ const API_KEY = 'AIzaSyDuUBQBD9dncpC5brObvAc6RoOjc4qWvAY';
 const REGION_CODE = 'IN';
 
 const fetchVideos = async (pageToken = '') => {
-  const API_URL = `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&regionCode=${REGION_CODE}&q='india trending reel in hindi'&type=video&videoDuration=short&key=${API_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
+  const searchAPIUrl = `https://youtube.googleapis.com/youtube/v3/search?part=snippet&maxResults=20&regionCode=${REGION_CODE}&q='india trending reel in hindi'&type=video&key=${API_KEY}${pageToken ? `&pageToken=${pageToken}` : ''}`;
 
-  const response = await fetch(API_URL);
-  if (!response.ok) {
-    throw new Error('Failed to fetch data');
+  const searchResponse = await fetch(searchAPIUrl);
+  if (!searchResponse.ok) {
+    throw new Error('Failed to fetch search data');
   }
-  return response.json();
+  const searchData = await searchResponse.json();
+
+  const videoIds = searchData.items.map(item => item.id.videoId).join(',');
+  const detailsAPIUrl = `https://youtube.googleapis.com/youtube/v3/videos?part=contentDetails&id=${videoIds}&key=${API_KEY}`;
+
+  const detailsResponse = await fetch(detailsAPIUrl);
+  if (!detailsResponse.ok) {
+    throw new Error('Failed to fetch video details');
+  }
+  const detailsData = await detailsResponse.json();
+
+  return {
+    items: searchData.items.map((item, index) => ({
+      ...item,
+      contentDetails: detailsData.items[index].contentDetails
+    })),
+    nextPageToken: searchData.nextPageToken
+  };
 };
 
 const Shorts = () => {
@@ -21,8 +38,20 @@ const Shorts = () => {
   const [error, setError] = useState(null);
   const [pageToken, setPageToken] = useState('');
   const [isFetching, setIsFetching] = useState(false);
+  const containerRef = useRef(null);
+  const observerRef = useRef(null);
+
+  const parseISO8601Duration = (duration) => {
+    const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+    const hours = parseInt(match[1]) || 0;
+    const minutes = parseInt(match[2]) || 0;
+    const seconds = parseInt(match[3]) || 0;
+    return hours * 3600 + minutes * 60 + seconds;
+  };
 
   const fetchMoreVideos = useCallback(async () => {
+    if (isFetching || !pageToken) return;
+
     setIsFetching(true);
     try {
       const result = await fetchVideos(pageToken);
@@ -31,14 +60,22 @@ const Shorts = () => {
         const seconds = parseISO8601Duration(duration);
         return seconds <= 60;
       });
-      setVideos(prevVideos => [...prevVideos, ...shorts]);
+      setVideos(prevVideos => {
+        const newVideos = [...prevVideos, ...shorts];
+        newVideos.forEach((_, index) => {
+          if (!videoRefs.current[index]) {
+            videoRefs.current[index] = React.createRef();
+          }
+        });
+        return newVideos;
+      });
       setPageToken(result.nextPageToken || '');
     } catch (error) {
       setError('Failed to fetch data');
     } finally {
       setIsFetching(false);
     }
-  }, [pageToken]);
+  }, [pageToken, isFetching]);
 
   useEffect(() => {
     const initialFetch = async () => {
@@ -51,6 +88,9 @@ const Shorts = () => {
         });
         setVideos(shorts);
         setPageToken(result.nextPageToken || '');
+        shorts.forEach((_, index) => {
+          videoRefs.current[index] = React.createRef();
+        });
       } catch (error) {
         setError('Failed to fetch data');
       } finally {
@@ -62,13 +102,20 @@ const Shorts = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 500 && !isFetching) {
+      const container = containerRef.current;
+      if (
+        container.scrollHeight - container.scrollTop <= container.clientHeight + 500 && 
+        !isFetching && 
+        pageToken
+      ) {
         fetchMoreVideos();
       }
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [fetchMoreVideos, isFetching]);
+
+    const container = containerRef.current;
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [fetchMoreVideos, isFetching, pageToken]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -91,52 +138,37 @@ const Shorts = () => {
       { threshold: 0.5 }
     );
 
-    if (videoRefs.current) {
-      videoRefs.current.forEach((ref) => ref && observer.observe(ref));
-    }
+    videoRefs.current.forEach((ref) => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    observerRef.current = observer;
 
     return () => {
-      if (videoRefs.current) {
-        videoRefs.current.forEach((ref) => ref && observer.unobserve(ref));
+      if (observerRef.current) {
+        observerRef.current.disconnect();
       }
     };
-  }, [loading]);
-
-  const parseISO8601Duration = (duration) => {
-    const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-    const hours = parseInt(match[1]) || 0;
-    const minutes = parseInt(match[2]) || 0;
-    const seconds = parseInt(match[3]) || 0;
-    return hours * 3600 + minutes * 60 + seconds;
-  };
+  }, [loading, videos]);
 
   return (
-    <>
-      <Stack
-        direction='row'
-        alignItems='center'
-        padding={2}
+    <div style={{ height: '100vh', overflow: 'hidden' }}>
+      <div
+        ref={containerRef}
         style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 20,
-          background: 'white',
-          width: '100%',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          padding: '0 1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          overflowY: 'auto',
+          scrollSnapType: 'y mandatory',
+          backgroundColor: '#F9F9F9',
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#FF0000 #FFFFFF',
         }}
       >
-        {/* Optional: Add any header content here */}
-      </Stack>
-
-      <div style={{
-        marginTop: '1rem',
-        padding: '0 1rem',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'scroll',
-        scrollSnapType: 'y mandatory',
-        height: 'calc(100vh - 6rem)',
-      }}>
         {loading ? (
           Array.from({ length: 16 }).map((_, index) => (
             <div
@@ -153,10 +185,10 @@ const Shorts = () => {
                   variant="rectangular"
                   width="100%"
                   height="100%"
+                  animation="wave"
                   style={{
-                    marginBottom: '2rem',
                     borderRadius: '8px',
-                    scrollSnapAlign: 'start',
+                    marginTop: '2rem',
                   }}
                 />
               </div>
@@ -172,9 +204,9 @@ const Shorts = () => {
                 justifyContent: 'center',
                 scrollSnapAlign: 'start',
               }}
-              ref={(el) => (videoRefs.current[index] = el)}
+              ref={videoRefs.current[index]}
             >
-              <div style={{ position: 'relative', width: '100%', maxWidth: 360, height: 650 }}>
+              <div style={{ position: 'relative', width: '100%', maxWidth: 360, height: 650, marginTop: '2rem' }}>
                 <iframe
                   width="100%"
                   height="100%"
@@ -199,14 +231,13 @@ const Shorts = () => {
             </div>
           ))
         )}
+        {isFetching && (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <Skeleton variant="rectangular" width="100%" height={100} animation="wave" />
+          </div>
+        )}
       </div>
-
-      {isFetching && (
-        <div style={{ textAlign: 'center', padding: '1rem' }}>
-          <Skeleton variant="rectangular" width="100%" height={100} />
-        </div>
-      )}
-    </>
+    </div>
   );
 };
 
